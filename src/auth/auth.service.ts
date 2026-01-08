@@ -5,7 +5,7 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 @Injectable()
 export class AuthService {
   create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+    return `Yangi foydalanuvchi yaratildi: ${JSON.stringify(createAuthDto)}`;
   }
 
   findAll() {
@@ -17,7 +17,7 @@ export class AuthService {
   }
 
   update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
+    return `#${id} ID raqamli foydalanuvchi yangilandi: ${JSON.stringify(updateAuthDto)}`;
   }
 
   remove(id: number) {

@@ -7,4 +7,7 @@ async function bootstrap() {
     console.log(`server ${process.env.PORT || 3001} portda ishaladi`);
   });
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Xatolik yuz berdi:', err);
+  process.exit(1);
+});
