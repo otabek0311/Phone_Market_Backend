@@ -1,26 +1,44 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/auth.entity';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+import { access } from 'fs';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return `Yangi foydalanuvchi yaratildi: ${JSON.stringify(createAuthDto)}`;
+  constructor(
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
+
+  async register(email: string, password: string) {
+    const hashed = await bcrypt.hash(password, 10);
+
+    const user = this.userRepo.create({
+      email,
+      password: hashed,
+    });
+
+    await this.userRepo.save(user);
+
+    return { message: 'registered' };
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async login(email: string, password: string) {
+    const user = await this.userRepo.findOne({ where: { email } });
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    if (!user) throw new UnauthorizedException(`invalid crodentials`);
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `#${id} ID raqamli foydalanuvchi yangilandi: ${JSON.stringify(updateAuthDto)}`;
-  }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) throw new UnauthorizedException(`invalid crendentials`);
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    const token = this.jwtService.sign({
+      sub: user.id,
+      role: user.role,
+    });
+    return { access_token: token };
   }
 }
