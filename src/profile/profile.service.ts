@@ -9,31 +9,41 @@ import { ProfileResponseDto } from './dto/profile-response.dto';
 export class ProfileService {
   constructor(
     @InjectRepository(Profile)
-    private readonly repo: Repository<Profile>,
+    private readonly profileRepository: Repository<Profile>,
   ) {}
 
+
   async findById(id: number): Promise<ProfileResponseDto> {
-    const profile = await this.repo.findOne({ where: { id } });
+    const profile = await this.profileRepository.findOne({
+      where: { id },
+    });
 
     if (!profile) {
       throw new NotFoundException('Profile not found');
     }
 
-    const { password, ...result } = profile;
+    const { password: _password, ...result } = profile;
     return result;
   }
 
-  async updateById(id: number, dto: UpdateProfileDto): Promise<ProfileResponseDto> {
-    const profile = await this.repo.findOne({ where: { id } });
+ 
+  async updateById(
+    id: number,
+    dto: UpdateProfileDto,
+  ): Promise<ProfileResponseDto> {
+    const profile = await this.profileRepository.findOne({
+      where: { id },
+    });
 
     if (!profile) {
       throw new NotFoundException('Profile not found');
     }
 
     Object.assign(profile, dto);
-    const saved = await this.repo.save(profile);
 
-    const { password, ...result } = saved;
+    const updatedProfile = await this.profileRepository.save(profile);
+
+    const { password: _password, ...result } = updatedProfile;
     return result;
   }
 }
