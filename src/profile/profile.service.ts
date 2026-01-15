@@ -12,7 +12,6 @@ export class ProfileService {
     private readonly profileRepository: Repository<Profile>,
   ) {}
 
-
   async findById(id: number): Promise<ProfileResponseDto> {
     const profile = await this.profileRepository.findOne({
       where: { id },
@@ -22,11 +21,11 @@ export class ProfileService {
       throw new NotFoundException('Profile not found');
     }
 
-    const { password: _password, ...result } = profile;
+    const result = { ...profile } as ProfileResponseDto & { password?: string };
+    delete result.password;
     return result;
   }
 
- 
   async updateById(
     id: number,
     dto: UpdateProfileDto,
@@ -43,7 +42,33 @@ export class ProfileService {
 
     const updatedProfile = await this.profileRepository.save(profile);
 
-    const { password: _password, ...result } = updatedProfile;
+    const result = { ...updatedProfile } as ProfileResponseDto & {
+      password?: string;
+    };
+    delete result.password;
     return result;
+  }
+
+  async updateMe(
+    id: number,
+    dto: UpdateProfileDto,
+  ): Promise<ProfileResponseDto> {
+    return this.updateById(id, dto);
+  }
+
+  async getAllUsers(): Promise<ProfileResponseDto[]> {
+    const profiles = await this.profileRepository.find();
+
+    return profiles.map((profile) => {
+      const result = { ...profile } as ProfileResponseDto & {
+        password?: string;
+      };
+      delete result.password;
+      return result;
+    });
+  }
+
+  async getUserById(id: number): Promise<ProfileResponseDto> {
+    return this.findById(id);
   }
 }
