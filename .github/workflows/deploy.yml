@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy backe to VPS
 
 on:
   push:
@@ -10,18 +10,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: SSH Deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 138.249.7.95
-          username: root
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd ~/Phone_Market_Backend
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        env:
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USERNAME }}
+          APP_DIR: /cyber/cyber_backend
+          PORT: ${{ secrets.PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          ssh $USER@$HOST << EOF
+          set -e
+
+          mkdir -p "$APP_DIR"
+          cd "$APP_DIR"
+
+          if [ ! -d .git ]; then
+            git clone https://github.com/otabek0311/Phone_Market_Backend.git .
+          else
             git pull origin main
-            npm install
-            npm run build
-            pm2 restart phone-market-api || pm2 start dist/main.js --name phone-market-api
+          fi
+
+          cat > .env << EOL
+          PORT=${PORT}
+          DB_NAME=${DB_NAME}
+          DB_PASSWORD=${DB_PASSWORD}
+          JWT_SECRET=${JWT_SECRET}
+          EOL
+
+          npm install
+          npm run build
+
+          pm2 delete cyber_backend || true
+          pm2 start dist/main.js --name cyber_backend
+          pm2 save
+          EOF
