@@ -1,21 +1,29 @@
-import { Profile } from "src/profile/entities/profile.entity";
-import { Product } from "src/product/entities/product.entity";
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+} from 'typeorm';
+
+import { Profile } from '../../profile/entities/profile.entity';
+import { Product } from '../../product/entities/product.entity';
 
 @Entity('cart')
 export class Cart {
-    @PrimaryGeneratedColumn()
-    id: number;
 
-    @Column()
-    quantity: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @ManyToOne(() => Profile, { onDelete: 'CASCADE' })
-    user: Profile;
+  @ManyToOne(() => Profile, { onDelete: 'CASCADE' })
+  user!: Profile;
 
-    @ManyToOne(() => Product, { onDelete: 'CASCADE' })
-    product: Product;
+  @ManyToOne(() => Product, { eager: true, onDelete: 'CASCADE' })
+  product!: Product;
 
-    @CreateDateColumn({ name: 'created_at' })
-    createdAt: Date;
+  @Column({ type: 'int' })
+  quantity!: number;
+
+  @CreateDateColumn()
+  createdAt!: Date;
 }
