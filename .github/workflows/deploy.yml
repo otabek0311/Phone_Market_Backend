@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy backe to VPS
 
 on:
   push:
@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup SSH key
         run: |
@@ -19,44 +18,40 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
-        shell: bash
 
       - name: Deploy to server
         env:
           HOST: ${{ secrets.HOST }}
           USER: ${{ secrets.USERNAME }}
-          APP_DIR: /ci_cd
+          APP_DIR: /cyber/cyber_backend
           PORT: ${{ secrets.PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           ssh $USER@$HOST << EOF
-            set -e
+          set -e
 
-            if [ ! -d "$APP_DIR" ]; then
-              mkdir -p "$APP_DIR"
-              git clone https://github.com/otabek0311/Phone_Market_Backend.git "$APP_DIR"
-            fi
+          mkdir -p "$APP_DIR"
+          cd "$APP_DIR"
 
-            cd "$APP_DIR"
-
-            if [ ! -d .git ]; then
-              echo "❌ Repo not cloned properly. Aborting."
-              exit 1
-            fi
-
+          if [ ! -d .git ]; then
+            git clone https://github.com/otabek0311/Phone_Market_Backend.git .
+          else
             git pull origin main
+          fi
 
-            echo "PORT=$PORT" > .env
-            npm install
-            npm run build
+          cat > .env << EOL
+          PORT=${PORT}
+          DB_NAME=${DB_NAME}
+          DB_PASSWORD=${DB_PASSWORD}
+          JWT_SECRET=${JWT_SECRET}
+          EOL
 
-            if pm2 list | grep -q "ci_cd_app"; then
-              pm2 restart ci_cd_app
-            else
-              pm2 start dist/main.js --name ci_cd_app
-            fi
+          npm install
+          npm run build
 
-            pm2 save
+          pm2 delete cyber_backend || true
+          pm2 start dist/main.js --name cyber_backend
+          pm2 save
           EOF
-
-
-          
