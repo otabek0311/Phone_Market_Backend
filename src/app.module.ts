@@ -27,7 +27,7 @@ import { ShippingModule } from './shipping/shipping.module';
         type: 'postgres',
         host: config.get('DB_HOST'),
         port: Number(config.get('DB_PORT')),
-        username: config.get('DB_USERNAME'),
+        username: 'postgres',
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
         autoLoadEntities: true,
